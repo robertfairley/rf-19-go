@@ -1,0 +1,38 @@
+/** cv.css */
+
+.rf_cv--main {
+	padding-bottom: 2em;
+}
+
+.rf_cv--main section {
+	margin-top: 1em;
+	margin-bottom: 1em;
+}
+
+.rf_cv--main hr {
+	margin-top: 2em;
+	margin-bottom: 2em;
+	border: 0;
+	height: 2px;
+	background-color: var(--spectre-text);
+}
+
+@media print {
+	
+	:root {
+		font-size: 0.9em;
+		line-height: 1.05;
+	}
+
+	.navbar {
+		display: none;
+	}
+
+	.btn {
+		display: none;
+	}
+
+	.cv__options {
+		display: none;
+	}
+}

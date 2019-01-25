@@ -1,0 +1,28 @@
+/** blog-post-list.css */
+
+.post-card {
+	cursor: pointer;
+	margin: 1.5em 0;
+}
+
+.post-card__front {
+	flex-direction: column;
+}
+
+.post-card__label {
+	background-color: #FFFFFF;
+	color: var(--spectre-text);
+	display: flex;
+	justify-content: center;
+	align-content: center;
+	align-items: center;
+	padding: 0.25em 1.2em;
+	margin: 5px;
+	text-shadow: none;
+
+	font-weight: 200;
+}
+
+.post-card__label.title {
+	font-size: 2em;
+}

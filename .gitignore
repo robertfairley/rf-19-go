@@ -1,0 +1,13 @@
+# Common
+.DS_Store
+*.o
+*.a
+*.pem
+*.csr
+*.crt
+
+# Application
+bin/
+pkg/
+src/gopkg.in/
+src/github.com/

@@ -1,0 +1,11 @@
+/** defaults.css */
+
+:root {
+	/** colors */
+	--spectre-text: #50596c;
+	--gray-text: #bbbbbb;
+}
+
+small.gray {
+	color: var(--gray-text);
+}
