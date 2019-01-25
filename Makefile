@@ -4,4 +4,5 @@ build:
 clean:
 	rm -rf ./bin
 setup:
+	export GOPATH=$(pwd)
 	go get -ugopkg.in/russross/blackfriday.v2
