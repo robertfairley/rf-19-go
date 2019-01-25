@@ -5,4 +5,4 @@ clean:
 	rm -rf ./bin
 setup:
 	export GOPATH=$(pwd)
-	go get -ugopkg.in/russross/blackfriday.v2
+	go get -u gopkg.in/russross/blackfriday.v2
