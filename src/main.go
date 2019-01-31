@@ -8,6 +8,8 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path"
+	"strings"
 
 	blackfriday "gopkg.in/russross/blackfriday.v2"
 )
@@ -30,6 +32,20 @@ type Page struct {
 // StringKeyValue - JSON key:value as string
 type StringKeyValue map[string]string
 
+//
+var cwd, _ = os.Getwd()
+
+//
+var settings = loadSettings()
+
+//
+var staticPath = cwd + "/static/"
+
+//
+var viewsPath = cwd + "/views"
+
+// loadSettings - Load the site settins from a JSON to prevent
+// the need to recompile if certain global settings change.
 func loadSettings() SiteSettings {
 	cwd, _ := os.Getwd()
 
@@ -51,10 +67,12 @@ func loadSettings() SiteSettings {
 	return settingsOutput
 }
 
-func getContents() []byte {
+// getContents - Get the markdown contents of a post and
+// convert it to renderable HTML
+func getContents(path string) []byte {
 	cwd, _ := os.Getwd()
 
-	testFilePath := cwd + "/posts/2019/01/hello-world.md"
+	testFilePath := cwd + "/posts/" + path
 	contents, err := ioutil.ReadFile(testFilePath)
 
 	if err != nil {
@@ -66,13 +84,39 @@ func getContents() []byte {
 	return output
 }
 
+// getPostName - Parse the provided string and return
+// the full post filename.
+func getPostName(filepath string) string {
+	var extension string = ".md"
+
+	filename := path.Base(filepath)
+	postName := strings.Split(filename, extension)
+
+	return postName[0]
+}
+
+//
+func getPostFilename(postURL string) string {
+	var extension string = ".md"
+
+	return postURL + extension
+}
+
+//
+func PostRouteHandler(w http.ResponseWriter, r *http.Request) {
+	postPath := strings.TrimPrefix(r.URL.Path, "/posts/")
+
+	tmpl := template.Must(template.ParseFiles(viewsPath + "/post.html"))
+
+	postContents := getContents(getPostFilename(postPath))
+
+	data := Page{
+		Content: template.HTML(postContents),
+	}
+	tmpl.Execute(w, data)
+}
+
 func main() {
-	cwd, _ := os.Getwd()
-
-	settings := loadSettings()
-
-	staticPath := cwd + "/static/"
-	viewsPath := cwd + "/views"
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		tmpl := template.Must(template.ParseFiles(viewsPath + "/home.html"))
@@ -88,17 +132,7 @@ func main() {
 		tmpl.Execute(w, nil)
 	})
 
-	http.HandleFunc("/hello-world", func(w http.ResponseWriter, r *http.Request) {
-		tmpl := template.Must(template.ParseFiles(viewsPath + "/post.html"))
-
-		postContents := getContents()
-
-		data := Page{
-			Title:   "Hello, world!",
-			Content: template.HTML(postContents),
-		}
-		tmpl.Execute(w, data)
-	})
+	http.HandleFunc("/posts/", PostRouteHandler)
 
 	fs := http.FileServer(http.Dir(staticPath))
 	http.Handle("/static/", http.StripPrefix("/static/", fs))
