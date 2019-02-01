@@ -3,5 +3,9 @@
   "slogan": "",
   "notice": "",
   "hostname": "http://localhost",
-  "port": ":5000"
+  "port": ":5000",
+  "postExt": ".md",
+  "postsDir": "/posts/",
+  "viewsDir": "/views",
+  "staticDir": "/static/"
 }
