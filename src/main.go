@@ -108,6 +108,9 @@ func getPostList() ([]string, []string) {
 
 	yearsDirs, _ = ioutil.ReadDir(postsPath)
 
+	// TODO - unnecessary complexity. Remember to just break this
+	// down to O(n) time. More thought than that probably isn't
+	// immediately needed...
 	for _, year := range yearsDirs {
 		yearPath := postsPath + year.Name() + "/"
 		months, _ := ioutil.ReadDir(yearPath)
