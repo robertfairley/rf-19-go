@@ -98,9 +98,37 @@ func getPostFilename(postURL string) string {
 	return postURL + settings.PostExt
 }
 
+// getPostList - Get and return a list of absolute paths
+// to every available blog post and as a second value return
+// a list of every available post filename
+func getPostList() ([]string, []string) {
+	var yearsDirs []os.FileInfo
+	var postPaths []string
+	var postNames []string
+
+	yearsDirs, _ = ioutil.ReadDir(postsPath)
+
+	for _, year := range yearsDirs {
+		yearPath := postsPath + year.Name() + "/"
+		months, _ := ioutil.ReadDir(yearPath)
+
+		for _, month := range months {
+			monthPath := yearPath + month.Name() + "/"
+			postFiles, _ := ioutil.ReadDir(monthPath)
+			for _, postFile := range postFiles {
+				postPaths = append(postPaths, monthPath+postFile.Name())
+				postNames = append(postNames, postFile.Name())
+			}
+		}
+	}
+
+	return postPaths, postNames
+}
+
 // HomeRouteHandler - Response for the home page
 func HomeRouteHandler(w http.ResponseWriter, r *http.Request) {
 	tmpl := template.Must(template.ParseFiles(viewsPath + "/home.html"))
+
 	data := Page{
 		Title:   settings.Title,
 		Content: "This is a test home page",
