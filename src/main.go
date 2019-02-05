@@ -10,6 +10,7 @@ import (
 	"os"
 	"path"
 	"strings"
+	"time"
 
 	blackfriday "gopkg.in/russross/blackfriday.v2"
 )
@@ -33,6 +34,17 @@ type Page struct {
 	Content interface{}
 }
 
+// Post - post metadata
+type Post struct {
+	Title     string
+	Date      string
+	Image     string
+	Excerpt   string
+	URL       string
+	LocalPath string
+	HTML      interface{}
+}
+
 // StringKeyValue - JSON key:value as string
 type StringKeyValue map[string]string
 
@@ -42,6 +54,7 @@ var settings = loadSettings()
 var staticPath = cwd + settings.StaticDir
 var viewsPath = cwd + settings.ViewsDir
 var postsPath = cwd + settings.PostsDir
+var postPaths, postNames = getPostList()
 
 // loadSettings - Load the site settins from a JSON to prevent
 // the need to recompile if certain global settings change.
@@ -59,7 +72,7 @@ func loadSettings() SiteSettings {
 		Notice:    result["notice"],
 		Hostname:  result["hostname"],
 		Port:      result["port"],
-		PostExt:   result["postExtension"],
+		PostExt:   result["postExt"],
 		PostsDir:  result["postsDir"],
 		ViewsDir:  result["viewsDir"],
 		StaticDir: result["staticDir"],
@@ -71,8 +84,8 @@ func loadSettings() SiteSettings {
 // getContents - Get the markdown contents of a post and
 // convert it to renderable HTML
 func getContents(path string) []byte {
-	testFilePath := postsPath + path
-	contents, err := ioutil.ReadFile(testFilePath)
+	postFilePath := postsPath + path
+	contents, err := ioutil.ReadFile(postFilePath)
 
 	if err != nil {
 		log.Fatal(err)
@@ -98,6 +111,19 @@ func getPostFilename(postURL string) string {
 	return postURL + settings.PostExt
 }
 
+//
+func getPostMeta(path string) Post {
+	postMeta := Post{}
+
+	postMeta.Title = getPostFilename(path)
+	postMeta.Date = time.Now().String()
+	postMeta.Excerpt = "Test item"
+	postMeta.LocalPath = path
+	postMeta.HTML = ""
+
+	return postMeta
+}
+
 // getPostList - Get and return a list of absolute paths
 // to every available blog post and as a second value return
 // a list of every available post filename
@@ -116,8 +142,11 @@ func getPostList() ([]string, []string) {
 			monthPath := yearPath + month.Name() + "/"
 			postFiles, _ := ioutil.ReadDir(monthPath)
 			for _, postFile := range postFiles {
-				postPaths = append(postPaths, monthPath+postFile.Name())
-				postNames = append(postNames, postFile.Name())
+				relPath := "/" + year.Name() + "/" + month.Name() + "/" + postFile.Name()
+				postUrlPath := strings.Replace(relPath, ".md", "", 1)
+				postProperName := strings.Replace(postFile.Name(), ".md", "", 1)
+				postPaths = append(postPaths, postUrlPath)
+				postNames = append(postNames, postProperName)
 			}
 		}
 	}
@@ -129,9 +158,15 @@ func getPostList() ([]string, []string) {
 func HomeRouteHandler(w http.ResponseWriter, r *http.Request) {
 	tmpl := template.Must(template.ParseFiles(viewsPath + "/home.html"))
 
+	var postLinks string
+
+	for i := 0; i < len(postNames); i++ {
+		postLinks += `<li><a href="/posts/` + postPaths[i] + `">` + postNames[i] + `</a></li>`
+	}
+
 	data := Page{
 		Title:   settings.Title,
-		Content: "This is a test home page",
+		Content: template.HTML(`<div class="container"><ul>` + postLinks + `</ul></div>`),
 	}
 	tmpl.Execute(w, data)
 }
@@ -165,8 +200,6 @@ func PostRouteHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-
-	fmt.Print(settings)
 
 	http.HandleFunc("/", HomeRouteHandler)
 	http.HandleFunc("/about", AboutRouteHandler)

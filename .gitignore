@@ -9,5 +9,4 @@
 # Application
 bin/
 pkg/
-src/gopkg.in/
-src/github.com/
+vendor/

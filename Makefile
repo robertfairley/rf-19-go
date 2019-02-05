@@ -1,12 +1,21 @@
+GOPATH=$(shell pwd)/vendor:$(shell pwd)
+GOBIN=$(shell pwd)/bin
+GOFILES=$(wildcard *.go)
+GONAME="server"
+
 run:
 	@go run src/main.go
 start:
-	./bin/server
+	./bin/$(GONAME)
 build:
-	make clean
-	go build -o bin/server src/main.go
+	@make clean
+	@GOPATH=$(GOPATH) GOBIN=$(GOBIN) go build -o bin/$(GONAME) ./src/$(GOFILES)
+get:
+	@GOPATH=$(GOPATH) GOBIN=$(GOBIN) go get ./src
 clean:
-	@rm -rf ./bin
-setup:
-	@export GOPATH=$(pwd)
-	go get -u gopkg.in/russross/blackfriday.v2
+	@GOPATH=$(GOPATH) GOBIN=$(GOBIN) go clean
+	@rm -rf ./bin ./pkg
+reset:
+	@rm -rf ./vendor ./bin ./pkg
+
+.PHONY: build get run start clean
