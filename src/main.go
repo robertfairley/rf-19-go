@@ -3,10 +3,8 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"html/template"
 	"io/ioutil"
 	"log"
-	"net/http"
 	"os"
 	"path"
 	"strings"
@@ -30,8 +28,9 @@ type SiteSettings struct {
 
 // Page - site page data
 type Page struct {
-	Title   string
-	Content interface{}
+	Title    string
+	Greeting interface{}
+	Content  interface{}
 }
 
 // Post - post metadata
@@ -45,6 +44,20 @@ type Post struct {
 	HTML      interface{}
 }
 
+// DirInfo - directory info including the original path
+type DirInfo struct {
+	children []os.FileInfo
+	info     os.FileInfo
+	path     string
+}
+
+// PostInfo - ... tbd
+type PostInfo struct {
+	info []byte
+	path string
+	data interface{}
+}
+
 // StringKeyValue - JSON key:value as string
 type StringKeyValue map[string]string
 
@@ -54,7 +67,8 @@ var settings = loadSettings()
 var staticPath = cwd + settings.StaticDir
 var viewsPath = cwd + settings.ViewsDir
 var postsPath = cwd + settings.PostsDir
-var postPaths, postNames = getPostList()
+
+//var postPaths, postNames = getPostList()
 
 // loadSettings - Load the site settins from a JSON to prevent
 // the need to recompile if certain global settings change.
@@ -129,34 +143,66 @@ func getPostMeta(path string) Post {
 // a list of every available post filename
 func getPostList() ([]string, []string) {
 	var yearsDirs []os.FileInfo
-	var postPaths []string
-	var postNames []string
+	//var monthsDirs []os.FileInfo
+	var years []DirInfo
+	var months []DirInfo
+	var posts []PostInfo
+	//var postFiles []os.FileInfo
+	//var postPaths []string
+	//var postNames []string
 
 	yearsDirs, _ = ioutil.ReadDir(postsPath)
 
-	// TODO - unnecessary complexity. Remember to just break this
-	// down to O(n) time. More thought than that probably isn't
-	// immediately needed...
 	for _, year := range yearsDirs {
-		yearPath := postsPath + year.Name() + "/"
-		months, _ := ioutil.ReadDir(yearPath)
+		thisYear := DirInfo{
+			info: year,
+			path: postsPath + year.Name() + "/",
+		}
+		thisYear.children, _ = ioutil.ReadDir(thisYear.path)
+		years = append(years, thisYear)
+	}
 
-		for _, month := range months {
-			monthPath := yearPath + month.Name() + "/"
-			postFiles, _ := ioutil.ReadDir(monthPath)
-			for _, postFile := range postFiles {
-				relPath := "/" + year.Name() + "/" + month.Name() + "/" + postFile.Name()
-				postUrlPath := strings.Replace(relPath, ".md", "", 1)
-				postProperName := strings.Replace(postFile.Name(), ".md", "", 1)
-				postPaths = append(postPaths, postUrlPath)
-				postNames = append(postNames, postProperName)
+	for i := 0; i < len(years); i++ {
+		for j := 0; j < len(years[i].children); j++ {
+			thisMonthPath := years[i].path + years[i].children[j].Name() + "/"
+			thisMonth := DirInfo{
+				info: years[i].children[j],
+				path: thisMonthPath,
 			}
+			thisMonth.children, _ = ioutil.ReadDir(thisMonth.path)
+			months = append(months, thisMonth)
 		}
 	}
 
-	return postPaths, postNames
+	for _, month := range months {
+
+		for i := 0; i < len(month.children); i++ {
+			postName := month.children[i].Name()
+			postData, _ := ioutil.ReadFile(postName)
+			thisPost := PostInfo{
+				info: postData,
+				path: month.path + postName,
+			}
+			posts = append(posts, thisPost)
+		}
+	}
+
+	for _, test := range posts {
+		fmt.Println(test.path)
+	}
+
+	//for _, postFile := range postFiles {
+	//	relPath := "/" + year.Name() + "/" + month.Name() + "/" + postFile.Name()
+	//	postURLPath := strings.Replace(relPath, ".md", "", 1)
+	//	postProperName := strings.Replace(postFile.Name(), ".md", "", 1)
+	//	postPaths = append(postPaths, postURLPath)
+	//	postNames = append(postNames, postProperName)
+	//}
+
+	return nil, nil
 }
 
+/*
 // HomeRouteHandler - Response for the home page
 func HomeRouteHandler(w http.ResponseWriter, r *http.Request) {
 	tmpl := template.Must(template.ParseFiles(viewsPath + "/home.html"))
@@ -167,9 +213,20 @@ func HomeRouteHandler(w http.ResponseWriter, r *http.Request) {
 		postLinks += `<li><a href="/posts/` + postPaths[i] + `">` + postNames[i] + `</a></li>`
 	}
 
+	md := "```\n" +
+		"#include <stdio.h>\n" +
+		"int main(void) {\n" +
+		"  printf(\"Hello, world!\");\n" +
+		"}```"
+
+	greet := []byte(md)
+
+	greeting := blackfriday.Run(greet)
+
 	data := Page{
-		Title:   settings.Title,
-		Content: template.HTML(`<div class="container"><ul>` + postLinks + `</ul></div>`),
+		Title:    settings.Title,
+		Greeting: template.HTML(string(greeting)),
+		Content:  template.HTML(`<div class="container"><ul>` + postLinks + `</ul></div>`),
 	}
 	tmpl.Execute(w, data)
 }
@@ -201,17 +258,19 @@ func PostRouteHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	tmpl.Execute(w, data)
 }
-
+*/
 func main() {
 
-	http.HandleFunc("/", HomeRouteHandler)
-	http.HandleFunc("/about", AboutRouteHandler)
-	http.HandleFunc("/cv", CvRouteHandler)
-	http.HandleFunc(settings.PostsDir, PostRouteHandler)
+	//http.HandleFunc("/", HomeRouteHandler)
+	//http.HandleFunc("/about", AboutRouteHandler)
+	//http.HandleFunc("/cv", CvRouteHandler)
+	//http.HandleFunc(settings.PostsDir, PostRouteHandler)
 
-	fs := http.FileServer(http.Dir(staticPath))
-	http.Handle(settings.StaticDir, http.StripPrefix(settings.StaticDir, fs))
+	//fs := http.FileServer(http.Dir(staticPath))
+	//http.Handle(settings.StaticDir, http.StripPrefix(settings.StaticDir, fs))
 
-	fmt.Printf("Listening at %s%s\n", settings.Hostname, settings.Port)
-	log.Fatal(http.ListenAndServe(settings.Port, nil))
+	//fmt.Printf("Listening at %s%s\n", settings.Hostname, settings.Port)
+	//log.Fatal(http.ListenAndServe(settings.Port, nil))
+
+	getPostList()
 }
