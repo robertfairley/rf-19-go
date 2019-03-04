@@ -262,13 +262,33 @@ func HomeRouteHandler(w http.ResponseWriter, r *http.Request) {
 	var postLinks string
 
 	for i := 0; i < len(postList); i++ {
-		postLinks += `<li><a href="` + postList[i].Meta.URL + `">` + postList[i].Meta.Title + ` - <i>` + postList[i].Meta.DateStr + `</i></a></li>`
+		postLinks += `<div class="column col-6 col-sm-12">
+		<div class="parallax post-card rounded" onClick="window.location.href = '` + postList[i].Meta.URL + `'">
+			<div class="parallax-top-left" tabindex="1"></div>
+			<div class="parallax-top-right" tabindex="2"></div>
+			<div class="parallax-bottom-left" tabindex="3"></div>
+			<div class="parallax-bottom-right" tabindex="4"></div>
+			<div class="parallax-content">
+				<div class="post-card__front parallax-front">
+					<div class="post-card__label title rounded">` + postList[i].Meta.Title + `</div>
+					
+					<div class="post-card__label rounded">
+						<a href="` + postList[i].Meta.URL + `">Read More</a>
+					</div>
+				</div>
+				<div class="parallax-back" style="background: url('/static/images/forrestville.png'); width: 100%; height: 400px; clear: both;">
+				</div>
+			</div>
+		</div>
+	</div>`
+
+		//postLinks += `<li><a href="` + postList[i].Meta.URL + `">` + postList[i].Meta.Title + ` - <i>` + postList[i].Meta.DateStr + `</i></a></li>`
 	}
 
 	data := Page{
 		Title: settings.Title,
 		//Greeting: template.HTML(string(greeting)),
-		Content: template.HTML(`<div class="container"><ul>` + postLinks + `</ul></div>`),
+		Content: template.HTML(`<div class="container"><div class="columns">` + postLinks + `</div></div>`),
 	}
 	tmpl.Execute(w, data)
 }
