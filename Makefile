@@ -17,5 +17,7 @@ clean:
 	@rm -rf ./bin ./pkg
 reset:
 	@rm -rf ./vendor ./bin ./pkg
+docs:
+	@godoc -http=:5005
 
-.PHONY: build get run start clean
+.PHONY: build get run start clean docs

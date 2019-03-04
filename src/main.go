@@ -3,12 +3,13 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 	"path"
 	"strings"
-	"time"
 
 	blackfriday "gopkg.in/russross/blackfriday.v2"
 )
@@ -33,29 +34,35 @@ type Page struct {
 	Content  interface{}
 }
 
-// Post - post metadata
-type Post struct {
-	Title     string
-	Date      string
-	Image     string
-	Excerpt   string
-	URL       string
-	LocalPath string
-	HTML      interface{}
-}
-
 // DirInfo - directory info including the original path
 type DirInfo struct {
-	children []os.FileInfo
-	info     os.FileInfo
-	path     string
+	Children []os.FileInfo
+	Info     os.FileInfo
+	Path     string
 }
 
 // PostInfo - ... tbd
 type PostInfo struct {
-	info []byte
-	path string
-	data interface{}
+	Info []byte
+	Path string
+	Meta PostMeta
+	Data interface{}
+}
+
+// PostDate - structure for holding parsed dates
+type PostDate struct {
+	Year  string
+	Month string
+	Day   string
+}
+
+// PostMeta - Basic post metadata
+type PostMeta struct {
+	Title   string
+	DateStr string
+	Date    PostDate
+	Excerpt string
+	URL     string
 }
 
 // StringKeyValue - JSON key:value as string
@@ -67,8 +74,7 @@ var settings = loadSettings()
 var staticPath = cwd + settings.StaticDir
 var viewsPath = cwd + settings.ViewsDir
 var postsPath = cwd + settings.PostsDir
-
-//var postPaths, postNames = getPostList()
+var postList, getPostListErr = getPostList()
 
 // loadSettings - Load the site settins from a JSON to prevent
 // the need to recompile if certain global settings change.
@@ -78,7 +84,7 @@ func loadSettings() SiteSettings {
 	settingsFileOutput, _ := ioutil.ReadFile(settingsPath)
 
 	var result StringKeyValue
-	json.Unmarshal([]byte(settingsFileOutput), &result)
+	json.Unmarshal(settingsFileOutput, &result)
 
 	settingsOutput := SiteSettings{
 		Title:     result["title"],
@@ -99,13 +105,15 @@ func loadSettings() SiteSettings {
 // convert it to renderable HTML
 func getContents(path string) []byte {
 	postFilePath := postsPath + path
-	contents, err := ioutil.ReadFile(postFilePath)
+	fullContents, err := ioutil.ReadFile(postFilePath)
+	// Remove the metadata header. Maybe extract this process later on.
+	contents := strings.Split(string(fullContents), "---")[1]
 
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	output := blackfriday.Run(contents)
+	output := blackfriday.Run([]byte(contents))
 
 	return output
 }
@@ -125,15 +133,51 @@ func getPostFilename(postURL string) string {
 	return postURL + settings.PostExt
 }
 
-//
-func getPostMeta(path string) Post {
-	postMeta := Post{}
+// getPostDate - format a date as a structure for convenient use
+func getPostDate(dateStr string) PostDate {
+	dateSpl := strings.Split(dateStr, "-")
 
-	postMeta.Title = getPostFilename(path)
-	postMeta.Date = time.Now().String()
-	postMeta.Excerpt = "Test item"
-	postMeta.LocalPath = path
-	postMeta.HTML = ""
+	return PostDate{
+		Year:  dateSpl[0],
+		Month: dateSpl[1],
+		Day:   dateSpl[2],
+	}
+}
+
+// getPostURL - get a formatted post url string
+func getPostURL(path string, date PostDate) string {
+	var postUrl string
+
+	postName := getPostName(path)
+	postUrl = "/posts/" + date.Year + "/" + date.Month + "/" + postName
+
+	return postUrl
+}
+
+// getPostMeta - generate a struct containing basic post metadata
+func getPostMeta(path string) PostMeta {
+	tfile, _ := ioutil.ReadFile(path)
+	dat := string(tfile)
+
+	headerDelim := "---"
+	infoDelim := ": "
+
+	postHeader := strings.Split(dat, headerDelim)[0]
+	postHeaderSpl := strings.Split(postHeader, "\n")
+
+	postTitle := strings.Split(postHeaderSpl[0], infoDelim)[1]
+	postDateStr := strings.Split(postHeaderSpl[1], infoDelim)[1]
+	postDate := getPostDate(postDateStr)
+	postExcerpt := strings.Split(postHeaderSpl[2], infoDelim)[1]
+	postURL := getPostURL(path, postDate)
+
+	postMeta := PostMeta{
+		Title:   postTitle,
+		Date:    postDate,
+		DateStr: postDateStr,
+		Excerpt: postExcerpt,
+		URL:     postURL,
+	}
 
 	return postMeta
 }
@@ -141,92 +185,90 @@ func getPostMeta(path string) Post {
 // getPostList - Get and return a list of absolute paths
 // to every available blog post and as a second value return
 // a list of every available post filename
-func getPostList() ([]string, []string) {
+func getPostList() ([]PostInfo, error) {
 	var yearsDirs []os.FileInfo
-	//var monthsDirs []os.FileInfo
 	var years []DirInfo
 	var months []DirInfo
 	var posts []PostInfo
-	//var postFiles []os.FileInfo
-	//var postPaths []string
-	//var postNames []string
+	var err error
 
-	yearsDirs, _ = ioutil.ReadDir(postsPath)
+	yearsDirs, err = ioutil.ReadDir(postsPath)
+
+	if err != nil {
+		return nil, err
+	}
 
 	for _, year := range yearsDirs {
 		thisYear := DirInfo{
-			info: year,
-			path: postsPath + year.Name() + "/",
+			Info: year,
+			Path: postsPath + year.Name() + "/",
 		}
-		thisYear.children, _ = ioutil.ReadDir(thisYear.path)
+		thisYear.Children, err = ioutil.ReadDir(thisYear.Path)
+
+		if err != nil {
+			return nil, err
+		}
+
 		years = append(years, thisYear)
 	}
 
 	for i := 0; i < len(years); i++ {
-		for j := 0; j < len(years[i].children); j++ {
-			thisMonthPath := years[i].path + years[i].children[j].Name() + "/"
+		for j := 0; j < len(years[i].Children); j++ {
+			thisMonthPath := years[i].Path + years[i].Children[j].Name() + "/"
 			thisMonth := DirInfo{
-				info: years[i].children[j],
-				path: thisMonthPath,
+				Info: years[i].Children[j],
+				Path: thisMonthPath,
 			}
-			thisMonth.children, _ = ioutil.ReadDir(thisMonth.path)
+			thisMonth.Children, err = ioutil.ReadDir(thisMonth.Path)
+
+			if err != nil {
+				return nil, err
+			}
+
 			months = append(months, thisMonth)
 		}
 	}
 
 	for _, month := range months {
 
-		for i := 0; i < len(month.children); i++ {
-			postName := month.children[i].Name()
-			postData, _ := ioutil.ReadFile(postName)
+		for i := 0; i < len(month.Children); i++ {
+			postName := month.Children[i].Name()
+			postPath := month.Path + postName
+			postData, err := ioutil.ReadFile(postPath)
+
+			if err != nil {
+				return nil, err
+			}
+
+			fmt.Println(postPath)
+
+			postMeta := getPostMeta(postPath)
 			thisPost := PostInfo{
-				info: postData,
-				path: month.path + postName,
+				Info: postData,
+				Path: postPath,
+				Meta: postMeta,
 			}
 			posts = append(posts, thisPost)
 		}
 	}
 
-	for _, test := range posts {
-		fmt.Println(test.path)
-	}
-
-	//for _, postFile := range postFiles {
-	//	relPath := "/" + year.Name() + "/" + month.Name() + "/" + postFile.Name()
-	//	postURLPath := strings.Replace(relPath, ".md", "", 1)
-	//	postProperName := strings.Replace(postFile.Name(), ".md", "", 1)
-	//	postPaths = append(postPaths, postURLPath)
-	//	postNames = append(postNames, postProperName)
-	//}
-
-	return nil, nil
+	return posts, nil
 }
 
-/*
 // HomeRouteHandler - Response for the home page
 func HomeRouteHandler(w http.ResponseWriter, r *http.Request) {
 	tmpl := template.Must(template.ParseFiles(viewsPath + "/home.html"))
 
 	var postLinks string
 
-	for i := 0; i < len(postNames); i++ {
-		postLinks += `<li><a href="/posts/` + postPaths[i] + `">` + postNames[i] + `</a></li>`
+	for i := 0; i < len(postList); i++ {
+		postLinks += `<li><a href="` + postList[i].Meta.URL + `">` + postList[i].Meta.Title + ` - <i>` + postList[i].Meta.DateStr + `</i></a></li>`
 	}
 
-	md := "```\n" +
-		"#include <stdio.h>\n" +
-		"int main(void) {\n" +
-		"  printf(\"Hello, world!\");\n" +
-		"}```"
-
-	greet := []byte(md)
-
-	greeting := blackfriday.Run(greet)
-
 	data := Page{
-		Title:    settings.Title,
-		Greeting: template.HTML(string(greeting)),
-		Content:  template.HTML(`<div class="container"><ul>` + postLinks + `</ul></div>`),
+		Title: settings.Title,
+		//Greeting: template.HTML(string(greeting)),
+		Content: template.HTML(`<div class="container"><ul>` + postLinks + `</ul></div>`),
 	}
 	tmpl.Execute(w, data)
 }
@@ -258,19 +300,24 @@ func PostRouteHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	tmpl.Execute(w, data)
 }
-*/
+
 func main() {
 
-	//http.HandleFunc("/", HomeRouteHandler)
-	//http.HandleFunc("/about", AboutRouteHandler)
-	//http.HandleFunc("/cv", CvRouteHandler)
-	//http.HandleFunc(settings.PostsDir, PostRouteHandler)
+	if getPostListErr != nil {
+		fmt.Print("SERVER EXITED DUE TO ERROR READING/PARSING POST LIST:\n")
+		log.Fatal(getPostListErr)
+	}
 
-	//fs := http.FileServer(http.Dir(staticPath))
-	//http.Handle(settings.StaticDir, http.StripPrefix(settings.StaticDir, fs))
+	http.HandleFunc("/", HomeRouteHandler)
+	http.HandleFunc("/about", AboutRouteHandler)
+	http.HandleFunc("/cv", CvRouteHandler)
+	http.HandleFunc(settings.PostsDir, PostRouteHandler)
 
-	//fmt.Printf("Listening at %s%s\n", settings.Hostname, settings.Port)
-	//log.Fatal(http.ListenAndServe(settings.Port, nil))
+	fs := http.FileServer(http.Dir(staticPath))
+	http.Handle(settings.StaticDir, http.StripPrefix(settings.StaticDir, fs))
+
+	fmt.Printf("Listening at %s%s\n", settings.Hostname, settings.Port)
+	log.Fatal(http.ListenAndServe(settings.Port, nil))
 
 	getPostList()
 }

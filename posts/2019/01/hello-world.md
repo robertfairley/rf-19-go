@@ -1,3 +1,7 @@
+title: Hello, World
+date: 2019-01-01
+excerpt: 
+---
 # Hello World
 
 This is a new test post. This is a paragraph. [Google Link](https://google.com)

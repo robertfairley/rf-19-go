@@ -1,3 +1,7 @@
+title: Test Post
+date: 2019-01-03
+excerpt: 
+---
 # Test Post
 
 This is a test post
