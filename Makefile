@@ -2,6 +2,7 @@ GOPATH=$(shell pwd)/vendor:$(shell pwd)
 GOBIN=$(shell pwd)/bin
 GOFILES=$(wildcard *.go)
 GONAME="server"
+DEPLOY_OS="linux"
 
 run:
 	@go run src/main.go

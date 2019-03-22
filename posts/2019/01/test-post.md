@@ -1,6 +1,7 @@
 title: Test Post
 date: 2019-01-03
 excerpt: 
+image: test-alternate-image.png
 ---
 # Test Post
 

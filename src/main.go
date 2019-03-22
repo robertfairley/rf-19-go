@@ -63,6 +63,7 @@ type PostMeta struct {
 	Date    PostDate
 	Excerpt string
 	URL     string
+	image   string
 }
 
 // StringKeyValue - JSON key:value as string
@@ -146,18 +147,18 @@ func getPostDate(dateStr string) PostDate {
 
 // getPostURL - get a formatted post url string
 func getPostURL(path string, date PostDate) string {
-	var postUrl string
+	var postURL string
 
 	postName := getPostName(path)
-	postUrl = "/posts/" + date.Year + "/" + date.Month + "/" + postName
+	postURL = "/posts/" + date.Year + "/" + date.Month + "/" + postName
 
-	return postUrl
+	return postURL
 }
 
 // getPostMeta - generate a struct containing basic post metadata
 func getPostMeta(path string) PostMeta {
-	tfile, _ := ioutil.ReadFile(path)
-	dat := string(tfile)
+	postFile, _ := ioutil.ReadFile(path)
+	dat := string(postFile)
 
 	headerDelim := "---"
 	infoDelim := ": "
@@ -170,6 +171,7 @@ func getPostMeta(path string) PostMeta {
 	postDate := getPostDate(postDateStr)
 	postExcerpt := strings.Split(postHeaderSpl[2], infoDelim)[1]
 	postURL := getPostURL(path, postDate)
+	postImage := strings.Split(postHeaderSpl[3], infoDelim)[1]
 
 	postMeta := PostMeta{
 		Title:   postTitle,
@@ -177,6 +179,7 @@ func getPostMeta(path string) PostMeta {
 		DateStr: postDateStr,
 		Excerpt: postExcerpt,
 		URL:     postURL,
+		image:   postImage,
 	}
 
 	return postMeta
@@ -257,11 +260,20 @@ func getPostList() ([]PostInfo, error) {
 
 // HomeRouteHandler - Response for the home page
 func HomeRouteHandler(w http.ResponseWriter, r *http.Request) {
-	tmpl := template.Must(template.ParseFiles(viewsPath + "/home.html"))
+	pageTemplate := template.Must(template.ParseFiles(viewsPath + "/home.html"))
+	postImageBasePath := "/static/images/"
 
 	var postLinks string
+	var postImage string
 
 	for i := 0; i < len(postList); i++ {
+
+		if postList[i].Meta.image != "" {
+			postImage = postImageBasePath + postList[i].Meta.image
+		} else {
+			postImage = postImageBasePath + "forrestville.png"
+		}
+
 		postLinks += `<div class="column col-6 col-sm-12">
 		<div class="parallax post-card rounded" onClick="window.location.href = '` + postList[i].Meta.URL + `'">
 			<div class="parallax-top-left" tabindex="1"></div>
@@ -276,33 +288,30 @@ func HomeRouteHandler(w http.ResponseWriter, r *http.Request) {
 						<a href="` + postList[i].Meta.URL + `">Read More</a>
 					</div>
 				</div>
-				<div class="parallax-back" style="background: url('/static/images/forrestville.png'); width: 100%; height: 400px; clear: both;">
+				<div class="parallax-back" style="background: url('` + postImage + `'); width: 100%; height: 400px; clear: both;">
 				</div>
 			</div>
 		</div>
 	</div>`
-
-		//postLinks += `<li><a href="` + postList[i].Meta.URL + `">` + postList[i].Meta.Title + ` - <i>` + postList[i].Meta.DateStr + `</i></a></li>`
 	}
 
 	data := Page{
-		Title: settings.Title,
-		//Greeting: template.HTML(string(greeting)),
+		Title:   settings.Title,
 		Content: template.HTML(`<div class="container"><div class="columns">` + postLinks + `</div></div>`),
 	}
-	tmpl.Execute(w, data)
+	pageTemplate.Execute(w, data)
 }
 
 // AboutRouteHandler - Response for the about page
 func AboutRouteHandler(w http.ResponseWriter, r *http.Request) {
-	tmpl := template.Must(template.ParseFiles(viewsPath + "/about.html"))
-	tmpl.Execute(w, nil)
+	pageTemplate := template.Must(template.ParseFiles(viewsPath + "/about.html"))
+	pageTemplate.Execute(w, nil)
 }
 
 // CvRouteHandler - Response for the CV page
 func CvRouteHandler(w http.ResponseWriter, r *http.Request) {
-	tmpl := template.Must(template.ParseFiles(viewsPath + "/cv.html"))
-	tmpl.Execute(w, nil)
+	pageTemplate := template.Must(template.ParseFiles(viewsPath + "/cv.html"))
+	pageTemplate.Execute(w, nil)
 }
 
 // PostRouteHandler - Response for any blog post. Parses the markdown file
@@ -311,14 +320,14 @@ func CvRouteHandler(w http.ResponseWriter, r *http.Request) {
 func PostRouteHandler(w http.ResponseWriter, r *http.Request) {
 	postPath := strings.TrimPrefix(r.URL.Path, settings.PostsDir)
 
-	tmpl := template.Must(template.ParseFiles(viewsPath + "/post.html"))
+	pageTemplate := template.Must(template.ParseFiles(viewsPath + "/post.html"))
 
 	postContents := getContents(getPostFilename(postPath))
 
 	data := Page{
 		Content: template.HTML(postContents),
 	}
-	tmpl.Execute(w, data)
+	pageTemplate.Execute(w, data)
 }
 
 func main() {

@@ -10,3 +10,6 @@
 bin/
 pkg/
 vendor/
+
+# Private Data
+static/images/test-alternate-image.png
