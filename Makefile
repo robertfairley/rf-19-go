@@ -11,6 +11,10 @@ start:
 build:
 	@make clean
 	@GOPATH=$(GOPATH) GOBIN=$(GOBIN) go build -o bin/$(GONAME) ./src/$(GOFILES)
+test:
+	@echo "Running tests..."
+	@echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+	@GOPATH=$(GOPATH) go test ./src && echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nPASSED"
 get:
 	@GOPATH=$(GOPATH) GOBIN=$(GOBIN) go get ./src
 clean:
