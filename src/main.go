@@ -6,9 +6,11 @@ import (
 	"html/template"
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"net/http"
 	"os"
 	"path"
+	"strconv"
 	"strings"
 
 	blackfriday "gopkg.in/russross/blackfriday.v2"
@@ -269,9 +271,12 @@ func HomeRouteHandler(w http.ResponseWriter, r *http.Request) {
 	for i := 0; i < len(postList); i++ {
 
 		if postList[i].Meta.image != "" {
-			postImage = postImageBasePath + postList[i].Meta.image
+			postImage = "url('" + postImageBasePath + postList[i].Meta.image + "')"
 		} else {
-			postImage = postImageBasePath + "forrestville.png"
+			r := strconv.Itoa(rand.Intn(255))
+			g := strconv.Itoa(rand.Intn(255))
+			b := strconv.Itoa(rand.Intn(255))
+			postImage = "rgb(" + r + "," + g + "," + b + "); filter: saturate(0.5)"
 		}
 
 		postLinks += `<div class="column col-6 col-sm-12">
@@ -288,7 +293,7 @@ func HomeRouteHandler(w http.ResponseWriter, r *http.Request) {
 						<a href="` + postList[i].Meta.URL + `">Read More</a>
 					</div>
 				</div>
-				<div class="parallax-back" style="background: url('` + postImage + `'); width: 100%; height: 400px; clear: both;">
+				<div class="parallax-back" style="background: ` + postImage + `; width: 100%; height: 400px; clear: both;">
 				</div>
 			</div>
 		</div>

@@ -1,7 +1,7 @@
 title: Test Post
 date: 2019-01-03
 excerpt: 
-image: test-alternate-image.png
+image: 
 ---
 # Test Post
 
@@ -19,3 +19,12 @@ int main(void)
   return 0;
 }
 ```
+
+<details>
+  <summary>A little more info</summary>
+  ```clike
+  void print(char** msg) {
+    std::cout << msg << std::endl;
+  }
+  ```
+</details>

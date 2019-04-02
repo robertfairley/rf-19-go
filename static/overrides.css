@@ -1,1 +1,8 @@
 /** overrides.css */
+.blog-post img {
+  max-width: 100%;
+}
+
+.dark {
+  filter: brightness(0.5);
+}
