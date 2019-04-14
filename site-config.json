@@ -2,7 +2,7 @@
   "title": "A Lazy Representation",
   "slogan": "",
   "notice": "",
-  "hostname": "http://localhost",
+  "hostname": "http://robertfairley.com",
   "port": ":5005",
   "postExt": ".md",
   "postsDir": "/posts/",

@@ -1,6 +1,7 @@
 #!/usr/bin/env sh
 
 PROJECT_DIR=$(pwd)/[!.][!vendor][!src]*
+PROJECT_DEST_DIR="/srv/go_blog"
 BIN_FILE="/srv/go_blog/bin/server"
 POSTS_DIR="/srv/go_blog/posts"
 
@@ -19,10 +20,10 @@ deploy() {
   make build-deploy;
   echo "Done.";
   echo "Uploading to server...";
-  ssh $DO_USER@$DO_BLOG_IP "if [ -z $PROJECT_DIR ]; then mkdir /srv/go_blog; else echo 'Folder go_blog exists'; fi;";
-  ssh $DO_USER@$DO_BLOG_IP "[ -z $BIN_FILE ] && rm -f $BIN_FILE;";
+  ssh $DO_USER@$DO_BLOG_IP "mkdir $PROJECT_DEST_DIR";
+  #ssh $DO_USER@$DO_BLOG_IP "[ -z $BIN_FILE ] && rm -f $BIN_FILE;";
   scp -rp $PROJECT_DIR $DO_USER@$DO_BLOG_IP:/srv/go_blog;
-  ssh $DO_USER@$DO_BLOG_IP "if [ -z $POSTS_DIR ]; then mkdir $POSTS_DIR; else echo 'Folder posts exists'; fi;";
+  ssh $DO_USER@$DO_BLOG_IP "mkdir $POSTS_DIR";
   scp -rp ./posts/* $DO_USER@$DO_BLOG_IP:/srv/go_blog/posts;
   echo "Done.";
 }
