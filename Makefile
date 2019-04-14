@@ -11,6 +11,9 @@ start:
 build:
 	@make clean
 	@GOPATH=$(GOPATH) GOBIN=$(GOBIN) go build -o bin/$(GONAME) ./src/$(GOFILES)
+build-deploy:
+	@make clean
+	@GOPATH=$(GOPATH) GOBIN=$(GOBIN) GOOS=$(DEPLOY_OS) go build -o bin/$(GONAME) ./src/$(GOFILES)
 test:
 	@echo "Running tests..."
 	@echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
@@ -24,5 +27,7 @@ reset:
 	@rm -rf ./vendor ./bin ./pkg
 docs:
 	@godoc -http=:5005
+deploy:
+	@./scripts/deploy.sh
 
-.PHONY: build get run start clean docs
+.PHONY: build build-deploy get run start clean docs deploy

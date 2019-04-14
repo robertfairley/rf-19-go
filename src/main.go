@@ -32,6 +32,7 @@ type SiteSettings struct {
 // Page - site page data
 type Page struct {
 	Title    string
+	Date     string
 	Greeting interface{}
 	Content  interface{}
 }
@@ -166,6 +167,7 @@ func getPostMeta(path string) PostMeta {
 	infoDelim := ": "
 
 	postHeader := strings.Split(dat, headerDelim)[0]
+
 	postHeaderSpl := strings.Split(postHeader, "\n")
 
 	postTitle := strings.Split(postHeaderSpl[0], infoDelim)[1]
@@ -266,6 +268,7 @@ func HomeRouteHandler(w http.ResponseWriter, r *http.Request) {
 	postImageBasePath := "/static/images/"
 
 	var postLinks string
+	var noScriptPostLinks string
 	var postImage string
 
 	for i := 0; i < len(postList); i++ {
@@ -288,6 +291,7 @@ func HomeRouteHandler(w http.ResponseWriter, r *http.Request) {
 			<div class="parallax-content">
 				<div class="post-card__front parallax-front">
 					<div class="post-card__label title rounded">` + postList[i].Meta.Title + `</div>
+					<div class="post-card__label"><small>` + postList[i].Meta.DateStr + `</small></div>
 					
 					<div class="post-card__label rounded">
 						<a href="` + postList[i].Meta.URL + `">Read More</a>
@@ -298,11 +302,27 @@ func HomeRouteHandler(w http.ResponseWriter, r *http.Request) {
 			</div>
 		</div>
 	</div>`
+
+		noScriptPostLinks += `<div>
+		<h5><a href="` + postList[i].Meta.URL + `">` + postList[i].Meta.Title + `</a>	-	` + postList[i].Meta.DateStr + `</h5>
+	</div>`
 	}
 
 	data := Page{
-		Title:   settings.Title,
-		Content: template.HTML(`<div class="container"><div class="columns">` + postLinks + `</div></div>`),
+		Title: settings.Title,
+		Content: template.HTML(`<div class="container">
+			<div class="columns" style="display:none;" id="post-cards">` + postLinks + `</div>
+			<noscript>
+			<nav>
+				<h2>Post</h2>
+				<hr />
+				` + noScriptPostLinks + `
+			</nav>
+		</noscript>
+		<script>
+			document.querySelector("#post-cards").style = null;
+		</script>
+		</div>`),
 	}
 	pageTemplate.Execute(w, data)
 }
