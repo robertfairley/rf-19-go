@@ -6,7 +6,7 @@ image:
 <small>2019-04-14</small>
 # Updated Site Build
 
-I've recently undertaken rebuilding my site from scratch. Previously I used the opportunity to
+**I've recently undertaken rebuilding** my site from scratch. Previously I used the opportunity to
 gain some experience building a simple blog using Python and Django. Working with those tools
 was a good experience in general, but didn't quite satisfy the way I wanted the thing to operate.
 

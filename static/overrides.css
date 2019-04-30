@@ -6,3 +6,13 @@
 .dark {
   filter: brightness(0.5);
 }
+
+abbr {
+  border-bottom: 1px dotted black;
+  cursor: help;
+}
+
+.blog-post hr {
+  margin-top: 1em;
+  margin-bottom: 1em;
+}
