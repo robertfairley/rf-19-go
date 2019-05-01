@@ -15,4 +15,6 @@ abbr {
 .blog-post hr {
   margin-top: 1em;
   margin-bottom: 1em;
+  border: 0;
+  border-bottom: 2px solid #ccc;
 }

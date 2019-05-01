@@ -9,9 +9,8 @@ image: anflib.png
 <div class="blog__post-header-image" style="background-image: url(/static/images/anflib.png)">&nbsp;
 </div>
 
-<a class="github-button" href="https://github.com/robertfairley/apple-news-format" data-icon="octicon-star" data-size="large" aria-label="Star robertfairley/apple-news-format on GitHub">Star</a>
-&nbsp;
-<a class="github-button" href="https://github.com/robertfairley/apple-news-format/fork" data-icon="octicon-repo-forked" data-size="large" aria-label="Fork robertfairley/apple-news-format on GitHub">Fork</a>
+<a class="github-button" href="https://github.com/robertfairley/apple-news-format" data-icon="octicon-star" data-size="large" aria-label="Star robertfairley/apple-news-format on GitHub">Star</a> <a class="github-button" href="https://github.com/robertfairley/apple-news-format/fork" data-icon="octicon-repo-forked" data-size="large" aria-label="Fork robertfairley/apple-news-format on GitHub">Fork</a>
+<hr/>
 
 **Recently I've been involved in a project** converting print design files to the newly [available in Canada] Apple News Format.
 
@@ -41,5 +40,3 @@ npm i apple-news-format
 I definitely welcome any help anybody might want to provide, if you find the code useful.
 
 Eventually I might decide to add implementations for each of the provided interfaces, but for now I'm leaving implementation up to the package consumer. That way the <abbr class="tooltip" data-tooltip="Apple News Format">ANF</abbr> contracts are provided, but all opinionated interference ends there.
-
-<script async defer src="https://buttons.github.io/buttons.js"></script>
