@@ -66,7 +66,7 @@ type PostMeta struct {
 	Date    PostDate
 	Excerpt string
 	URL     string
-	image   string
+	Image   string
 }
 
 // StringKeyValue - JSON key:value as string
@@ -153,7 +153,7 @@ func getPostURL(path string, date PostDate) string {
 	var postURL string
 
 	postName := getPostName(path)
-	postURL = "/posts/" + date.Year + "/" + date.Month + "/" + postName
+	postURL = settings.PostsDir + date.Year + "/" + date.Month + "/" + postName
 
 	return postURL
 }
@@ -183,7 +183,7 @@ func getPostMeta(path string) PostMeta {
 		DateStr: postDateStr,
 		Excerpt: postExcerpt,
 		URL:     postURL,
-		image:   postImage,
+		Image:   postImage,
 	}
 
 	return postMeta
@@ -265,7 +265,7 @@ func getPostList() ([]PostInfo, error) {
 // HomeRouteHandler - Response for the home page
 func HomeRouteHandler(w http.ResponseWriter, r *http.Request) {
 	pageTemplate := template.Must(template.ParseFiles(viewsPath + "/home.html"))
-	postImageBasePath := "/static/images/"
+	postImageBasePath := settings.StaticDir + "images/"
 
 	var postLinks string
 	var noScriptPostLinks string
@@ -273,8 +273,8 @@ func HomeRouteHandler(w http.ResponseWriter, r *http.Request) {
 
 	for i := 0; i < len(postList); i++ {
 
-		if postList[i].Meta.image != "" {
-			postImage = "url('" + postImageBasePath + postList[i].Meta.image + "')"
+		if postList[i].Meta.Image != "" {
+			postImage = "url('" + postImageBasePath + postList[i].Meta.Image + "')"
 		} else {
 			r := strconv.Itoa(rand.Intn(255))
 			g := strconv.Itoa(rand.Intn(255))
@@ -344,12 +344,18 @@ func CvRouteHandler(w http.ResponseWriter, r *http.Request) {
 // path beneath `/posts/` sub-routes`
 func PostRouteHandler(w http.ResponseWriter, r *http.Request) {
 	postPath := strings.TrimPrefix(r.URL.Path, settings.PostsDir)
+	postFile := getPostFilename(postPath)
+	postMeta := getPostMeta(postsPath + postFile)
+	//	postMeta := getPostMeta(postFile)
 
 	pageTemplate := template.Must(template.ParseFiles(viewsPath + "/post.html"))
 
-	postContents := getContents(getPostFilename(postPath))
+	postContents := getContents(postFile)
+
+	fmt.Println(postContents)
 
 	data := Page{
+		Title:   postMeta.Title,
 		Content: template.HTML(postContents),
 	}
 	pageTemplate.Execute(w, data)
