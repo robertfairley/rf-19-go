@@ -1,10 +1,9 @@
-title: Updated Site Build
-date: 2019-04-14
-excerpt: 
-image: 
+title:Updated Site Build
+date:2019-04-14
+excerpt:
+image:
 ---
 <small>2019-04-14</small>
-# Updated Site Build
 
 **I've recently undertaken rebuilding** my site from scratch. Previously I used the opportunity to
 gain some experience building a simple blog using Python and Django. Working with those tools

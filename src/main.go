@@ -10,9 +10,11 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"sort"
 	"strconv"
 	"strings"
 
+	// Vendor Packages
 	blackfriday "gopkg.in/russross/blackfriday.v2"
 )
 
@@ -44,7 +46,8 @@ type DirInfo struct {
 	Path     string
 }
 
-// PostInfo - ... tbd
+// PostInfo - Basic info structure holding
+// any data related to a blog post
 type PostInfo struct {
 	Info []byte
 	Path string
@@ -164,7 +167,7 @@ func getPostMeta(path string) PostMeta {
 	dat := string(postFile)
 
 	headerDelim := "---"
-	infoDelim := ": "
+	infoDelim := ":"
 
 	postHeader := strings.Split(dat, headerDelim)[0]
 
@@ -192,11 +195,11 @@ func getPostMeta(path string) PostMeta {
 // getPostList - Get and return a list of absolute paths
 // to every available blog post and as a second value return
 // a list of every available post filename
-func getPostList() ([]PostInfo, error) {
+func getPostList() (OrderedPosts, error) {
 	var yearsDirs []os.FileInfo
 	var years []DirInfo
 	var months []DirInfo
-	var posts []PostInfo
+	var posts OrderedPosts
 	var err error
 
 	yearsDirs, err = ioutil.ReadDir(postsPath)
@@ -247,8 +250,6 @@ func getPostList() ([]PostInfo, error) {
 				return nil, err
 			}
 
-			fmt.Println(postPath)
-
 			postMeta := getPostMeta(postPath)
 			thisPost := PostInfo{
 				Info: postData,
@@ -258,6 +259,8 @@ func getPostList() ([]PostInfo, error) {
 			posts = append(posts, thisPost)
 		}
 	}
+
+	sort.Sort(posts)
 
 	return posts, nil
 }
@@ -352,8 +355,6 @@ func PostRouteHandler(w http.ResponseWriter, r *http.Request) {
 
 	postContents := getContents(postFile)
 
-	fmt.Println(postContents)
-
 	data := Page{
 		Title:   postMeta.Title,
 		Content: template.HTML(postContents),
@@ -379,5 +380,4 @@ func main() {
 	fmt.Printf("Listening at %s%s\n", settings.Hostname, settings.Port)
 	log.Fatal(http.ListenAndServe(settings.Port, nil))
 
-	getPostList()
 }

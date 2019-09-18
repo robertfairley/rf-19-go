@@ -1,10 +1,9 @@
-title: Apple News Format Types
-date: 2019-04-29
-excerpt: A library of expressions for working with the Apple News Format in publishing
-image: anflib.png
+title:Apple News Format Types
+date:2019-04-29
+excerpt:A library of expressions for working with the Apple News Format in publishing
+image:anflib.png
 ---
 <small>2019-04-29</small>
-# Apple News Format Types
 
 <div class="blog__post-header-image" style="background-image: url(/static/images/anflib.png)">&nbsp;
 </div>

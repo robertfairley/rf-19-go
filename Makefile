@@ -1,4 +1,4 @@
-GOPATH=$(shell pwd)/vendor:$(shell pwd)
+GOPATH=$(shell pwd)/vendor:$(shell pwd):$(shell pwd)/src
 GOBIN=$(shell pwd)/bin
 GOFILES=$(wildcard *.go)
 GONAME="server"
@@ -7,7 +7,8 @@ DEPLOY_OS="linux"
 run:
 	@go run src/main.go
 start:
-	./bin/$(GONAME)
+	@echo "Starting server..."
+	@./bin/$(GONAME)
 build:
 	@make clean
 	@GOPATH=$(GOPATH) GOBIN=$(GOBIN) go build -o bin/$(GONAME) ./src/$(GOFILES)
